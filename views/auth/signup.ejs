@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — Mandir ERP 🕉️</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); min-height: 100vh; }
+    .glass { background: rgba(255,255,255,0.07); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); }
+    .form-input {
+      width: 100% !important;
+      background: rgba(255,255,255,0.08) !important;
+      background-color: rgba(255,255,255,0.08) !important;
+      border: 1px solid rgba(255,255,255,0.16) !important;
+      border-radius: 12px !important;
+      color: #ffffff !important;
+      padding: 12px 16px 12px 44px !important;
+      font-size: 14px !important;
+      outline: none !important;
+      transition: all 0.2s ease !important;
+    }
+    .form-input::placeholder { color: rgba(255,255,255,0.4) !important; }
+    .form-input:focus { border-color: #f59e0b !important; background-color: rgba(255,255,255,0.12) !important; box-shadow: 0 0 0 3px rgba(245,158,11,0.25) !important; color: #ffffff !important; }
+    .form-input.no-icon { padding-left: 16px !important; }
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus {
+      -webkit-text-fill-color: #ffffff !important;
+      -webkit-box-shadow: 0 0 0px 1000px #1e1b4b inset !important;
+      box-shadow: 0 0 0px 1000px #1e1b4b inset !important;
+      transition: background-color 5000s ease-in-out 0s !important;
+    }
+    .orb { position: absolute; border-radius: 50%; filter: blur(80px); animation: float 8s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-30px); } }
+    @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+    .card-anim { animation: slideUp 0.5s ease forwards; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: all 0.3s; }
+    .step-dot.active { width: 24px; border-radius: 4px; background: #f59e0b; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 overflow-hidden relative">
+  <div class="orb w-96 h-96 bg-purple-500/20 top-[-100px] right-[-100px]" style="animation-delay:0s"></div>
+  <div class="orb w-80 h-80 bg-amber-500/15 bottom-[-80px] left-[-80px]" style="animation-delay:3s"></div>
+
+  <div class="w-full max-w-md relative z-10 card-anim">
+    <!-- Logo -->
+    <div class="text-center mb-7">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl mx-auto mb-3 shadow-2xl" style="box-shadow: 0 0 30px rgba(251,191,36,0.35)">🕉️</div>
+      <h1 class="text-2xl font-extrabold text-white mb-1">Create Your Account</h1>
+      <p class="text-white/50 text-sm">Set up Mandir ERP for your temple</p>
+    </div>
+
+    <!-- Card -->
+    <div class="glass rounded-3xl p-7">
+      <% if(error) { %>
+      <div class="mb-5 flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+        <i class="ph-bold ph-warning-circle text-red-400 text-xl flex-shrink-0"></i>
+        <p class="text-red-400 text-sm font-medium"><%= error %></p>
+      </div>
+      <% } %>
+
+      <form method="POST" action="/auth/signup" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-white/60 mb-2">Temple / Organization Name</label>
+          <div class="relative">
+            <i class="ph-bold ph-building-temple absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 text-lg"></i>
+            <input type="text" name="temple_name" required placeholder="Shri Ram Mandir, Varanasi" class="form-input">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-white/60 mb-2">Your Full Name</label>
+          <div class="relative">
+            <i class="ph-bold ph-user absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 text-lg"></i>
+            <input type="text" name="name" required placeholder="Pandit Ramesh Sharma" class="form-input">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-white/60 mb-2">Email Address</label>
+          <div class="relative">
+            <i class="ph-bold ph-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 text-lg"></i>
+            <input type="email" name="email" required placeholder="admin@temple.com" class="form-input">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold text-white/60 mb-2">Password</label>
+            <div class="relative">
+              <i class="ph-bold ph-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 text-lg"></i>
+              <input type="password" name="password" required placeholder="Min 6 chars" class="form-input" minlength="6">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-white/60 mb-2">Confirm</label>
+            <div class="relative">
+              <i class="ph-bold ph-lock-key absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 text-lg"></i>
+              <input type="password" name="confirm_password" required placeholder="Re-enter" class="form-input">
+            </div>
+          </div>
+        </div>
+
+        <!-- Password strength -->
+        <div id="pwStrength" class="hidden">
+          <div class="flex gap-1 mt-1">
+            <div class="h-1 flex-1 rounded-full bg-white/10" id="s1"></div>
+            <div class="h-1 flex-1 rounded-full bg-white/10" id="s2"></div>
+            <div class="h-1 flex-1 rounded-full bg-white/10" id="s3"></div>
+            <div class="h-1 flex-1 rounded-full bg-white/10" id="s4"></div>
+          </div>
+          <p class="text-xs text-white/30 mt-1" id="pwLabel">Enter password</p>
+        </div>
+
+        <!-- Terms -->
+        <div class="flex items-start gap-3 pt-1">
+          <input type="checkbox" required id="terms" class="mt-1 w-4 h-4 accent-amber-500 flex-shrink-0">
+          <label for="terms" class="text-xs text-white/40">I agree to use this system responsibly for temple management purposes only.</label>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-2xl font-bold text-white text-base transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 8px 25px rgba(245,158,11,0.35);">
+          <span class="flex items-center justify-center gap-2">
+            <i class="ph-bold ph-rocket-launch text-lg"></i>
+            Create Account & Get Started
+          </span>
+        </button>
+      </form>
+
+      <div class="mt-5 text-center">
+        <p class="text-white/40 text-sm">
+          Already have an account? <a href="/auth/login" class="text-amber-400 font-semibold hover:text-amber-300 transition-colors">Sign in →</a>
+        </p>
+      </div>
+    </div>
+    <p class="text-center text-white/20 text-xs mt-5">🕉️ Mandir ERP — Temple Management System</p>
+  </div>
+
+  <script>
+    const pwInput = document.querySelector('[name="password"]');
+    pwInput.addEventListener('input', function() {
+      const pw = this.value;
+      document.getElementById('pwStrength').classList.toggle('hidden', pw.length === 0);
+      const bars = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3'), document.getElementById('s4')];
+      const label = document.getElementById('pwLabel');
+      bars.forEach(b => b.className = 'h-1 flex-1 rounded-full bg-white/10');
+      let score = 0;
+      if (pw.length >= 6) score++;
+      if (pw.length >= 10) score++;
+      if (/[A-Z]/.test(pw) && /[0-9]/.test(pw)) score++;
+      if (/[!@#$%^&*]/.test(pw)) score++;
+      const colors = ['bg-red-500', 'bg-orange-500', 'bg-amber-400', 'bg-green-500'];
+      const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+      for (let i = 0; i < score; i++) bars[i].className = `h-1 flex-1 rounded-full ${colors[score-1]}`;
+      label.textContent = score > 0 ? labels[score-1] : 'Too short';
+      label.style.color = score > 0 ? '#fbbf24' : 'rgba(255,255,255,0.3)';
+    });
+  </script>
+</body>
+</html>

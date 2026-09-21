@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salary Slip — <%= payroll.name %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    @media print {
+      button { display: none !important; }
+      body { margin: 0; padding: 0; }
+    }
+  </style>
+</head>
+<body class="p-6 max-w-2xl mx-auto bg-slate-50 text-slate-800 min-h-screen">
+  <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-6 text-center">
+      <div class="text-3xl mb-1">🕉️</div>
+      <h1 class="text-xl font-bold tracking-tight">SHRI MANDIR TRUST</h1>
+      <p class="text-amber-200 text-xs">Salary Slip — <%= new Date(payroll.month + '-01').toLocaleString('en-IN', {month:'long', year:'numeric'}) %></p>
+    </div>
+
+    <!-- Employee Details -->
+    <div class="p-6 grid grid-cols-2 gap-3 bg-amber-50/70 text-xs border-b border-amber-100">
+      <div><span class="text-slate-500">Employee Name:</span><br><strong class="text-slate-800 text-sm"><%= payroll.name %></strong></div>
+      <div><span class="text-slate-500">Designation / Role:</span><br><strong class="text-slate-800 text-sm"><%= payroll.role %></strong></div>
+      <div><span class="text-slate-500">Contact:</span><br><strong class="text-slate-800"><%= payroll.phone || 'N/A' %></strong></div>
+      <div><span class="text-slate-500">Bank:</span><br><strong class="text-slate-800"><%= payroll.bank_name || 'N/A' %></strong></div>
+      <div><span class="text-slate-500">UPI ID:</span><br><strong class="text-slate-800"><%= payroll.upi_id || 'N/A' %></strong></div>
+      <div><span class="text-slate-500">Account No:</span><br><strong class="text-slate-800 font-mono"><%= payroll.bank_account || 'N/A' %></strong></div>
+    </div>
+
+    <!-- Salary Breakdown -->
+    <div class="p-6">
+      <table class="w-full text-xs border-collapse">
+        <thead>
+          <tr class="bg-slate-50">
+            <th class="text-left p-3 border border-slate-200 font-semibold text-slate-600">Description</th>
+            <th class="text-right p-3 border border-slate-200 font-semibold text-slate-600">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="p-3 border border-slate-200 font-medium">Base Salary</td>
+            <td class="p-3 border border-slate-200 text-right font-mono">₹<%= parseFloat(payroll.base_salary).toLocaleString('en-IN') %></td>
+          </tr>
+          <tr class="bg-slate-50">
+            <td class="p-3 border border-slate-200 font-medium">Days in Month</td>
+            <td class="p-3 border border-slate-200 text-right font-mono"><%= payroll.days_in_month %></td>
+          </tr>
+          <tr>
+            <td class="p-3 border border-slate-200 font-medium">Days Present (incl. Paid Leave)</td>
+            <td class="p-3 border border-slate-200 text-right font-mono"><%= payroll.days_present %></td>
+          </tr>
+          <tr class="bg-slate-50">
+            <td class="p-3 border border-slate-200 font-medium">Earned Salary = (Base ÷ Days) × Present</td>
+            <td class="p-3 border border-slate-200 text-right font-mono font-semibold">₹<%= ((payroll.base_salary / payroll.days_in_month) * payroll.days_present).toFixed(2) %></td>
+          </tr>
+          <% if(parseFloat(payroll.festival_bonus || 0) > 0) { %>
+          <tr class="text-emerald-700 bg-emerald-50/50">
+            <td class="p-3 border border-emerald-100 font-medium">Festival Bonus / Allowance</td>
+            <td class="p-3 border border-emerald-100 text-right font-mono font-semibold">+ ₹<%= parseFloat(payroll.festival_bonus).toLocaleString('en-IN') %></td>
+          </tr>
+          <% } %>
+          <% if(parseFloat(payroll.advance_deduction || 0) > 0) { %>
+          <tr class="text-rose-600 bg-rose-50/50">
+            <td class="p-3 border border-rose-100 font-medium">Advance Salary Deduction</td>
+            <td class="p-3 border border-rose-100 text-right font-mono font-semibold">− ₹<%= parseFloat(payroll.advance_deduction).toLocaleString('en-IN') %></td>
+          </tr>
+          <% } %>
+          <tr class="bg-emerald-600 text-white font-bold text-sm">
+            <td class="p-4 border border-emerald-700 uppercase tracking-wider">NET SALARY PAYABLE</td>
+            <td class="p-4 border border-emerald-700 text-right font-mono text-xl">₹<%= parseFloat(payroll.net_salary).toLocaleString('en-IN') %></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Signatures -->
+    <div class="p-6 border-t border-slate-200 grid grid-cols-2 gap-8 text-center text-xs">
+      <div><div class="border-t-2 border-dashed border-slate-300 mt-10 pt-2 text-slate-500 font-medium">Employee Signature</div></div>
+      <div><div class="border-t-2 border-dashed border-slate-300 mt-10 pt-2 text-slate-500 font-medium">Authorized Signatory</div></div>
+    </div>
+
+    <div class="bg-amber-50/70 p-3 text-center text-[11px] text-amber-800 border-t border-amber-100">
+      Generated on <%= new Date().toLocaleDateString('en-IN') %> | Mandir ERP System | Computer Generated Slip
+    </div>
+  </div>
+
+  <div class="text-center mt-6 space-x-3">
+    <button onclick="window.print()" class="bg-amber-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-amber-700 shadow-md transition-colors text-sm">🖨️ Print Salary Slip</button>
+    <button onclick="window.close()" class="bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-semibold hover:bg-slate-300 transition-colors text-sm">Close</button>
+  </div>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!-- Month Filter + Export Controls -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <form method="GET" class="flex gap-3 items-center">
+    <label class="text-xs uppercase tracking-wider font-semibold text-white/50">Month:</label>
+    <input type="month" name="month" value="<%= month %>" class="form-input w-auto text-sm py-1.5 px-3 cursor-pointer" onchange="this.form.submit()">
+  </form>
+  <div class="flex flex-wrap gap-2">
+    <a href="/reports/export/donations?month=<%= month %>" class="btn-secondary text-xs py-2 px-3">
+      <i class="ph-duotone ph-download-simple text-sm"></i>
+      <span>Donations Excel</span>
+    </a>
+    <a href="/reports/export/expenses?month=<%= month %>" class="btn-secondary text-xs py-2 px-3">
+      <i class="ph-duotone ph-download-simple text-sm"></i>
+      <span>Expenses Excel</span>
+    </a>
+    <a href="/reports/export/payroll?month=<%= month %>" class="btn-secondary text-xs py-2 px-3">
+      <i class="ph-duotone ph-download-simple text-sm"></i>
+      <span>Payroll Excel</span>
+    </a>
+    <button onclick="window.print()" class="btn-primary text-xs py-2 px-3.5">
+      <i class="ph-bold ph-printer text-sm"></i>
+      <span>Print Report</span>
+    </button>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <div class="glass p-5 rounded-2xl border-l-4 border-emerald-400">
+    <p class="text-xs text-white/50 font-medium">Total Donations</p>
+    <p class="text-2xl sm:text-3xl font-bold text-emerald-400 font-mono mt-1">₹<%= incomeTotal.toLocaleString('en-IN') %></p>
+    <p class="text-[11px] text-emerald-400/70 mt-1">Cash & Digital collections</p>
+  </div>
+
+  <div class="glass p-5 rounded-2xl border-l-4 border-rose-500">
+    <p class="text-xs text-white/50 font-medium">Total Expenses</p>
+    <p class="text-2xl sm:text-3xl font-bold text-rose-400 font-mono mt-1">₹<%= expenseTotal.toLocaleString('en-IN') %></p>
+    <p class="text-[11px] text-rose-400/70 mt-1">All operating categories</p>
+  </div>
+
+  <div class="glass p-5 rounded-2xl border-l-4 border-blue-400">
+    <p class="text-xs text-white/50 font-medium">Payroll Cost</p>
+    <p class="text-2xl sm:text-3xl font-bold text-blue-400 font-mono mt-1">₹<%= payrollTotal.toLocaleString('en-IN') %></p>
+    <p class="text-[11px] text-blue-400/70 mt-1">Staff net disbursements</p>
+  </div>
+
+  <div class="glass p-5 rounded-2xl border-l-4 <%= netBalance >= 0 ? 'border-amber-400' : 'border-rose-500' %>">
+    <p class="text-xs text-white/50 font-medium">Net Monthly Balance</p>
+    <p class="text-2xl sm:text-3xl font-bold <%= netBalance >= 0 ? 'text-amber-400' : 'text-rose-400' %> font-mono mt-1">
+      ₹<%= Math.abs(netBalance).toLocaleString('en-IN') %>
+    </p>
+    <p class="text-[11px] font-semibold <%= netBalance >= 0 ? 'text-emerald-400' : 'text-rose-400' %> mt-1">
+      <%= netBalance >= 0 ? '✨ Surplus' : '⚠️ Deficit' %>
+    </p>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+  <!-- 6-Month Trend -->
+  <div class="glass p-6 rounded-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-white text-base flex items-center gap-2">
+        <i class="ph-duotone ph-chart-line-up text-amber-400 text-lg"></i>
+        <span>6-Month Income vs Expense Trend</span>
+      </h3>
+    </div>
+    <div class="h-64">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Donation by Mode -->
+  <div class="glass p-6 rounded-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-white text-base flex items-center gap-2">
+        <i class="ph-duotone ph-pie-chart text-amber-400 text-lg"></i>
+        <span>Donations by Payment Mode</span>
+      </h3>
+    </div>
+    <div class="h-64 flex items-center justify-center">
+      <canvas id="modeChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Tables Row -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+  <!-- Top Donors -->
+  <div class="glass p-6 rounded-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-white text-base flex items-center gap-2">
+        <i class="ph-duotone ph-trophy text-amber-400 text-lg"></i>
+        <span>Top Donors This Month</span>
+      </h3>
+      <span class="text-xs text-white/40"><%= topDonors.length %> contributors</span>
+    </div>
+
+    <div class="space-y-3">
+      <% topDonors.forEach((d, i) => { %>
+      <div class="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5 hover:border-amber-500/20 transition-all">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs <%= i === 0 ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : i === 1 ? 'bg-slate-300/20 text-slate-200 border border-slate-300/30' : i === 2 ? 'bg-amber-700/20 text-amber-500 border border-amber-700/30' : 'bg-white/10 text-white/60' %>">
+          <%= i + 1 %>
+        </div>
+        <div class="flex-1 flex justify-between items-center min-w-0">
+          <span class="font-semibold text-white/90 text-sm truncate"><%= d.donor_name %></span>
+          <span class="font-bold text-emerald-400 font-mono text-sm ml-2">₹<%= parseFloat(d.total).toLocaleString('en-IN') %></span>
+        </div>
+      </div>
+      <% }); %>
+      <% if(!topDonors.length) { %>
+        <p class="text-white/40 text-xs text-center py-6">No donation data recorded for this month</p>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Expense by Category -->
+  <div class="glass p-6 rounded-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-white text-base flex items-center gap-2">
+        <i class="ph-duotone ph-receipt text-amber-400 text-lg"></i>
+        <span>Expense Breakdown</span>
+      </h3>
+      <span class="text-xs text-white/40"><%= expenseByCategory.length %> Categories</span>
+    </div>
+
+    <div class="space-y-3.5">
+      <% const expTotal = expenseByCategory.reduce((a,b) => a + parseFloat(b.total), 0); %>
+      <% expenseByCategory.forEach(cat => {
+        const pct = expTotal > 0 ? (parseFloat(cat.total) / expTotal * 100).toFixed(0) : 0;
+      %>
+      <div>
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="font-medium text-white/80"><%= cat.category %></span>
+          <span class="text-white/50 font-mono">₹<%= parseFloat(cat.total).toLocaleString('en-IN') %> <span class="text-rose-400/80">(<%= pct %>%)</span></span>
+        </div>
+        <div class="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+          <div class="bg-gradient-to-r from-rose-500 to-amber-500 h-1.5 rounded-full" style="width:<%= pct %>%"></div>
+        </div>
+      </div>
+      <% }); %>
+      <% if(!expenseByCategory.length) { %>
+        <p class="text-white/40 text-xs text-center py-6">No expenses recorded for this month</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Commodity Donations -->
+<div class="glass p-6 mb-6 rounded-2xl">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-bold text-white text-base flex items-center gap-2">
+      <i class="ph-duotone ph-package text-amber-400 text-lg"></i>
+      <span>Commodity Donations This Month</span>
+    </h3>
+  </div>
+
+  <% if(!commodityDonations.length) { %>
+    <p class="text-white/40 text-xs text-center py-6">No commodity or in-kind donations registered for this month</p>
+  <% } else { %>
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <% commodityDonations.forEach(c => { %>
+    <div class="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
+      <p class="font-bold text-amber-300 text-xl font-mono"><%= parseFloat(c.total_qty).toFixed(1) %></p>
+      <p class="text-[11px] text-white/50 uppercase font-semibold mt-0.5"><%= c.unit %></p>
+      <p class="text-xs text-white/80 font-medium mt-1"><%= c.item_name %></p>
+    </div>
+    <% }); %>
+  </div>
+  <% } %>
+</div>
+
+<script>
+const trendRaw = <%- trend %>;
+const modeData = <%- JSON.stringify(donationByMode) %>;
+
+// Dark Theme Options for Chart.js
+Chart.defaults.color = 'rgba(255, 255, 255, 0.6)';
+Chart.defaults.font.family = 'Plus Jakarta Sans';
+
+// Trend Chart
+const trendCtx = document.getElementById('trendChart');
+if (trendCtx) {
+  new Chart(trendCtx, {
+    type: 'line',
+    data: {
+      labels: trendRaw.map(d => d.month),
+      datasets: [
+        {
+          label: 'Income ₹',
+          data: trendRaw.map(d => parseFloat(d.income) || 0),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#10b981'
+        },
+        {
+          label: 'Expense ₹',
+          data: trendRaw.map(d => parseFloat(d.expense) || 0),
+          borderColor: '#f43f5e',
+          backgroundColor: 'rgba(244, 63, 94, 0.15)',
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#f43f5e'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { color: 'rgba(255, 255, 255, 0.8)' }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: { color: 'rgba(255, 255, 255, 0.5)' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: 'rgba(255, 255, 255, 0.5)' }
+        }
+      }
+    }
+  });
+}
+
+// Mode Chart
+const modeCtx = document.getElementById('modeChart');
+if (modeCtx) {
+  new Chart(modeCtx, {
+    type: 'doughnut',
+    data: {
+      labels: modeData.map(d => d.payment_mode),
+      datasets: [{
+        data: modeData.map(d => parseFloat(d.total)),
+        backgroundColor: ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#f43f5e'],
+        borderWidth: 2,
+        borderColor: '#1e1b4b'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: 'rgba(255, 255, 255, 0.8)', padding: 15 }
+        }
+      }
+    }
+  });
+}
+</script>

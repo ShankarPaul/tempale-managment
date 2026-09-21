@@ -1,0 +1,33 @@
+{
+  "name": "mandir-erp",
+  "version": "1.0.0",
+  "description": "Mandir ERP - Temple Management System",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "migrate": "node src/database/migrate.js"
+  },
+  "keywords": [
+    "temple",
+    "mandir",
+    "erp",
+    "management"
+  ],
+  "author": "Mandir ERP Team",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "connect-pg-simple": "^10.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.1",
+    "ejs": "^6.0.1",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "morgan": "^1.12.1",
+    "multer": "^2.4.0",
+    "pg": "^8.23.0",
+    "serverless-http": "^4.0.0"
+  }
+}

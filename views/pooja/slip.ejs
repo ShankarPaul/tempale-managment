@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pooja Booking Slip — <%= booking.booking_number %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    @media print {
+      button { display: none !important; }
+      body { margin: 0; padding: 0; }
+    }
+  </style>
+</head>
+<body class="p-6 max-w-xl mx-auto bg-slate-50 min-h-screen text-slate-800">
+  <div class="bg-white border border-slate-200 shadow-xl rounded-2xl overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-3xl mb-1">🕉️</div>
+          <h1 class="text-xl font-bold tracking-tight">SHRI MANDIR TRUST</h1>
+          <p class="text-amber-200 text-xs">Pooja & Ritual Booking Confirmation</p>
+        </div>
+        <div class="text-right">
+          <div class="bg-white/15 backdrop-blur text-white px-3 py-1.5 rounded-xl font-bold font-mono text-sm border border-white/20">
+            <%= booking.booking_number %>
+          </div>
+          <p class="text-amber-200 text-[11px] mt-1 uppercase font-semibold"><%= booking.status %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-4">
+      <div class="bg-amber-50/70 rounded-xl p-4 border border-amber-100">
+        <p class="text-amber-800 font-bold text-xs uppercase tracking-wider mb-2">🙏 Devotee Details</p>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div><span class="text-slate-500">Name:</span><br><strong class="text-slate-800 text-sm"><%= booking.devotee_name %></strong></div>
+          <div><span class="text-slate-500">Phone:</span><br><strong class="text-slate-800 text-sm"><%= booking.devotee_phone || 'N/A' %></strong></div>
+          <% if(booking.gotra) { %>
+            <div><span class="text-slate-500">Gotra:</span><br><strong class="text-slate-800"><%= booking.gotra %></strong></div>
+          <% } %>
+          <% if(booking.address) { %>
+            <div class="col-span-2"><span class="text-slate-500">Location:</span><br><strong class="text-slate-800"><%= booking.address %></strong></div>
+          <% } %>
+        </div>
+      </div>
+
+      <table class="w-full text-xs border-collapse">
+        <tr class="bg-slate-50"><td class="p-3 border border-slate-200 font-semibold text-slate-600">Pooja Type</td><td class="p-3 border border-slate-200 font-bold text-amber-700 text-sm"><%= booking.pooja_type %></td></tr>
+        <tr><td class="p-3 border border-slate-200 font-semibold text-slate-600">Date</td><td class="p-3 border border-slate-200 font-medium"><%= new Date(booking.booking_date).toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) %></td></tr>
+        <% if(booking.pooja_time) { %>
+          <tr class="bg-slate-50"><td class="p-3 border border-slate-200 font-semibold text-slate-600">Time</td><td class="p-3 border border-slate-200 font-medium"><%= booking.pooja_time %></td></tr>
+        <% } %>
+        <tr><td class="p-3 border border-slate-200 font-semibold text-slate-600">Assigned Priest</td><td class="p-3 border border-slate-200 font-bold"><%= booking.priest_name || 'To be assigned' %></td></tr>
+        <% if(booking.special_requirements) { %>
+          <tr class="bg-slate-50"><td class="p-3 border border-slate-200 font-semibold text-slate-600">Special Requirements</td><td class="p-3 border border-slate-200"><%= booking.special_requirements %></td></tr>
+        <% } %>
+        <tr><td class="p-3 border border-slate-200 font-semibold text-slate-600">Booking Fee</td><td class="p-3 border border-slate-200 font-bold text-slate-800 font-mono">₹<%= parseFloat(booking.booking_fee || 0).toLocaleString('en-IN') %></td></tr>
+        <% if(parseFloat(booking.advance_paid || 0) > 0) { %>
+          <tr class="bg-emerald-50 text-emerald-800"><td class="p-3 border border-emerald-200 font-semibold">Advance Paid</td><td class="p-3 border border-emerald-200 font-bold font-mono">₹<%= parseFloat(booking.advance_paid).toLocaleString('en-IN') %></td></tr>
+        <% } %>
+        <tr class="bg-amber-600 text-white"><td class="p-3 font-bold">Balance Due</td><td class="p-3 font-bold text-base font-mono">₹<%= (parseFloat(booking.booking_fee || 0) - parseFloat(booking.advance_paid || 0)).toLocaleString('en-IN') %></td></tr>
+      </table>
+    </div>
+
+    <!-- Signatures -->
+    <div class="p-6 border-t border-slate-200 grid grid-cols-2 gap-8 text-center text-xs">
+      <div><div class="border-t-2 border-dashed border-slate-300 mt-10 pt-1.5 text-slate-500 font-medium">Devotee Signature</div></div>
+      <div><div class="border-t-2 border-dashed border-slate-300 mt-10 pt-1.5 text-slate-500 font-medium">Temple Authority</div></div>
+    </div>
+
+    <div class="bg-amber-50/60 p-3 text-center text-[11px] text-amber-800 border-t border-amber-100">
+      🕉️ Please arrive 15 minutes prior to pooja schedule | Issued on <%= new Date().toLocaleDateString('en-IN') %>
+    </div>
+  </div>
+
+  <div class="text-center mt-6 space-x-3">
+    <button onclick="window.print()" class="bg-amber-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-amber-700 shadow-md transition-colors text-sm">
+      🖨️ Print Slip
+    </button>
+    <button onclick="window.close()" class="bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-semibold hover:bg-slate-300 transition-colors text-sm">
+      Close
+    </button>
+  </div>
+</body>
+</html>
