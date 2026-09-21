@@ -9,6 +9,9 @@ const ejs = require('ejs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust reverse proxy (Netlify, Render, Heroku)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(morgan('dev'));
 app.use(cors());
@@ -23,13 +26,18 @@ const pool = require('./config/db');
 app.use(session({
   store: new pgSession({
     pool: pool,
-    tableName: 'session',
-    createTableIfMissing: true
+    tableName: 'session'
   }),
+  name: 'mandir.sid',
   secret: process.env.SESSION_SECRET || 'mandir-erp-secret-2026',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
+  cookie: {
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: 'auto'
+  }
 }));
 
 const fs = require('fs');

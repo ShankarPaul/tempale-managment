@@ -24,14 +24,25 @@ exports.postLogin = async (req, res) => {
     if (!valid) {
       return res.render('auth/login', { title: 'Login', error: 'Invalid email or password' });
     }
+
     req.session.userId = user.id;
     req.session.userName = user.name;
     req.session.userRole = user.role;
     req.session.templeName = user.temple_name || 'Shri Mandir Trust';
+
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
-    res.redirect('/');
+
+    // Explicitly wait for session to save into Neon Postgres before redirecting
+    req.session.save((err) => {
+      if (err) {
+        console.error('❌ Session save error:', err);
+        return res.render('auth/login', { title: 'Login', error: 'Session save failed. Please try again.' });
+      }
+      res.redirect('/');
+    });
   } catch (err) {
-    res.render('auth/login', { title: 'Login', error: 'Server error. Please try again.' });
+    console.error('❌ Login error:', err);
+    res.render('auth/login', { title: 'Login', error: 'Database / Server error: ' + (err.message || 'Please try again') });
   }
 };
 
@@ -53,16 +64,32 @@ exports.postSignup = async (req, res) => {
       `INSERT INTO users (name, email, password_hash, role, temple_name) VALUES ($1,$2,$3,'superadmin',$4) RETURNING *`,
       [name.trim(), email.toLowerCase().trim(), hash, temple_name?.trim() || 'Shri Mandir Trust']
     );
+
     req.session.userId = user.rows[0].id;
     req.session.userName = user.rows[0].name;
     req.session.userRole = 'superadmin';
     req.session.templeName = user.rows[0].temple_name;
-    res.redirect('/');
+
+    // Explicitly wait for session to save into Neon Postgres before redirecting
+    req.session.save((err) => {
+      if (err) {
+        console.error('❌ Signup session save error:', err);
+      }
+      res.redirect('/');
+    });
   } catch (err) {
+    console.error('❌ Signup error:', err);
     res.render('auth/signup', { title: 'Create Account', error: 'Registration failed: ' + err.message });
   }
 };
 
 exports.logout = (req, res) => {
-  req.session.destroy(() => res.redirect('/auth/login'));
+  if (req.session) {
+    req.session.destroy(() => {
+      res.clearCookie('connect.sid');
+      res.redirect('/auth/login');
+    });
+  } else {
+    res.redirect('/auth/login');
+  }
 };
