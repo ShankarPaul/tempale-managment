@@ -1,0 +1,202 @@
+<!-- Controls -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <div class="flex flex-wrap gap-2">
+    <button onclick="document.getElementById('issueModal').classList.add('active')" class="btn-primary text-sm py-2 px-4">
+      <i class="ph-duotone ph-cooking-pot text-base"></i> Issue to Kitchen
+    </button>
+    <button onclick="document.getElementById('addItemModal').classList.add('active')" class="btn-secondary text-sm py-2 px-4">
+      <i class="ph-bold ph-plus text-base"></i> Add Item
+    </button>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <% ['All','Groceries','Vegetables','Fruits','Oil & Ghee','Spices','Pooja Items'].forEach((cat,i) => { %>
+    <button onclick="filterInventory('<%= cat %>')" class="inv-tab px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap <%= i===0?'bg-amber-500/20 text-amber-400 border border-amber-500/30':'glass text-white/50 hover:text-white/80' %>" data-cat="<%= cat %>"><%= cat %></button>
+    <% }); %>
+  </div>
+</div>
+
+<!-- Items Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6" id="inventoryGrid">
+  <% if(!items.length) { %>
+  <div class="col-span-full text-center py-20">
+    <div class="w-16 h-16 rounded-full glass flex items-center justify-center mx-auto mb-4"><i class="ph-duotone ph-package text-3xl text-white/20"></i></div>
+    <p class="text-white/40 font-semibold">No inventory items yet</p>
+    <p class="text-white/25 text-sm mt-1">Click "Add Item" to add your first stock item</p>
+  </div>
+  <% } %>
+  <% items.forEach(item => {
+    const pct = Math.min(100, (item.current_stock / Math.max(1, item.min_buffer_stock * 3)) * 100);
+    const isLow = parseFloat(item.current_stock) <= parseFloat(item.min_buffer_stock);
+    const barColor = isLow ? 'bg-red-500' : pct > 60 ? 'bg-green-500' : 'bg-amber-400';
+    const stockColor = isLow ? 'text-red-400' : pct > 60 ? 'text-green-400' : 'text-amber-400';
+  %>
+  <div class="glass-card p-5 inv-card" data-cat="<%= item.category %>">
+    <div class="flex justify-between items-start mb-4">
+      <div class="flex-1 min-w-0">
+        <h4 class="font-bold text-white/90 text-sm leading-tight truncate"><%= item.item_name %></h4>
+        <p class="text-white/30 text-xs mt-0.5"><%= item.category %></p>
+      </div>
+      <div class="flex gap-1.5 ml-2 flex-shrink-0">
+        <% if(item.is_perishable) { %><span class="badge badge-amber" style="padding:2px 7px;font-size:10px">Fresh</span><% } %>
+        <% if(isLow) { %><span class="badge badge-red" style="padding:2px 7px;font-size:10px">⚠️ Low</span><% } %>
+      </div>
+    </div>
+    <div class="mb-4">
+      <div class="flex justify-between items-baseline mb-1.5">
+        <span class="text-white/30 text-xs">Current Stock</span>
+        <span class="<%= stockColor %> font-extrabold text-lg"><%= parseFloat(item.current_stock).toFixed(1) %> <span class="text-white/30 font-normal text-xs"><%= item.unit %></span></span>
+      </div>
+      <div class="w-full bg-white/10 rounded-full h-2">
+        <div class="<%= barColor %> h-2 rounded-full transition-all duration-700" style="width:<%= Math.max(3, pct) %>%"></div>
+      </div>
+      <p class="text-white/25 text-xs mt-1">Buffer: <%= item.min_buffer_stock %> <%= item.unit %></p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="quickAdjust(<%= item.id %>, '<%= item.item_name %>', 'IN')" class="flex-1 bg-green-500/15 hover:bg-green-500/25 text-green-400 text-xs font-bold py-2 rounded-xl transition-colors flex items-center justify-center gap-1">
+        <i class="ph-bold ph-plus-circle text-sm"></i> In
+      </button>
+      <button onclick="quickAdjust(<%= item.id %>, '<%= item.item_name %>', 'OUT')" class="flex-1 bg-red-500/15 hover:bg-red-500/25 text-red-400 text-xs font-bold py-2 rounded-xl transition-colors flex items-center justify-center gap-1">
+        <i class="ph-bold ph-minus-circle text-sm"></i> Out
+      </button>
+    </div>
+  </div>
+  <% }); %>
+</div>
+
+<!-- Recent Transactions -->
+<div class="glass-card p-6">
+  <h3 class="font-bold text-white text-base mb-4">Recent Stock Transactions</h3>
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead><tr><th>Item</th><th>Type</th><th>Quantity</th><th>Purpose</th><th>Date</th></tr></thead>
+      <tbody>
+        <% if(!transactions.length) { %>
+        <tr><td colspan="5" class="text-center py-8 text-white/30">No transactions yet</td></tr>
+        <% } %>
+        <% transactions.forEach(t => { %>
+        <tr>
+          <td class="text-white/85 font-semibold"><%= t.item_name %></td>
+          <td><span class="<%= t.transaction_type==='IN'?'badge badge-green':'badge badge-red' %>"><%= t.transaction_type==='IN'?'📥 In':'📤 Out' %></span></td>
+          <td class="font-bold <%= t.transaction_type==='IN'?'text-green-400':'text-red-400' %>"><%= parseFloat(t.quantity) %> <%= t.unit %></td>
+          <td class="text-white/40 text-xs"><%= t.purpose || t.reference_type %></td>
+          <td class="text-white/40 text-xs whitespace-nowrap"><%= new Date(t.transaction_date).toLocaleDateString('en-IN') %></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Issue Modal -->
+<div class="modal-overlay" id="issueModal">
+  <div class="modal-box max-w-xl">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold text-white">🍽️ Issue to Kitchen</h3>
+      <button onclick="document.getElementById('issueModal').classList.remove('active')" class="text-white/40 hover:text-white w-8 h-8 rounded-xl hover:bg-white/10 flex items-center justify-center"><i class="ph-bold ph-x text-lg"></i></button>
+    </div>
+    <form id="issueForm">
+      <div id="issueItems" class="space-y-3 mb-4">
+        <div class="issue-item grid grid-cols-3 gap-3">
+          <div><label class="form-label">Item *</label>
+            <select name="item_id[]" required class="form-input">
+              <option value="">Select item</option>
+              <% items.forEach(i => { %><option value="<%= i.id %>"><%= i.item_name %> (<%= parseFloat(i.current_stock).toFixed(1) %> <%= i.unit %>)</option><% }); %>
+            </select>
+          </div>
+          <div><label class="form-label">Qty *</label><input type="number" name="quantity[]" required step="0.1" min="0.1" class="form-input"></div>
+          <div><label class="form-label">Purpose</label><input type="text" name="purpose[]" placeholder="Morning Prasad" class="form-input"></div>
+        </div>
+      </div>
+      <button type="button" onclick="addIssueRow()" class="text-amber-400 text-sm font-semibold hover:text-amber-300 flex items-center gap-1 mb-4">
+        <i class="ph-bold ph-plus-circle"></i> Add Another Item
+      </button>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div><label class="form-label">Date</label><input type="date" id="issueDate" class="form-input" value="<%= new Date().toISOString().split('T')[0] %>"></div>
+        <div><label class="form-label">Issued By</label><input type="text" id="issuedBy" class="form-input" placeholder="Name"></div>
+      </div>
+      <div class="flex gap-3">
+        <button type="submit" class="btn-primary flex-1 justify-center py-3"><i class="ph-bold ph-check-circle text-base"></i> Issue Stock</button>
+        <button type="button" onclick="document.getElementById('issueModal').classList.remove('active')" class="btn-secondary py-3">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal-overlay" id="addItemModal">
+  <div class="modal-box max-w-md">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold text-white">Add Inventory Item</h3>
+      <button onclick="document.getElementById('addItemModal').classList.remove('active')" class="text-white/40 hover:text-white w-8 h-8 rounded-xl hover:bg-white/10 flex items-center justify-center"><i class="ph-bold ph-x text-lg"></i></button>
+    </div>
+    <form id="addItemForm" class="grid grid-cols-2 gap-4">
+      <div class="col-span-2"><label class="form-label">Item Name *</label><input type="text" name="item_name" required class="form-input" placeholder="e.g. Rice, Ghee, Incense Sticks"></div>
+      <div><label class="form-label">Category *</label>
+        <select name="category" required class="form-input">
+          <option>Groceries</option><option>Vegetables</option><option>Fruits</option><option>Spices</option>
+          <option>Oil & Ghee</option><option>Dairy</option><option>Clothing</option><option>Precious Metals</option>
+          <option>Pooja Items</option><option>Other</option>
+        </select>
+      </div>
+      <div><label class="form-label">Unit *</label>
+        <select name="unit" required class="form-input">
+          <option>KG</option><option>Grams</option><option>Liters</option><option>Pieces</option><option>Packets</option><option>Bags</option>
+        </select>
+      </div>
+      <div><label class="form-label">Opening Stock</label><input type="number" name="current_stock" class="form-input" placeholder="0" min="0"></div>
+      <div><label class="form-label">Min Buffer Stock</label><input type="number" name="min_buffer_stock" class="form-input" placeholder="10" min="0"></div>
+      <div class="col-span-2 flex items-center gap-3"><input type="checkbox" name="is_perishable" value="true" id="perishable" class="w-5 h-5 accent-amber-500"><label for="perishable" class="text-sm font-semibold text-white/60">Perishable Item</label></div>
+      <div class="col-span-2 flex gap-3">
+        <button type="submit" class="btn-primary flex-1 justify-center py-3"><i class="ph-bold ph-check-circle text-base"></i> Add Item</button>
+        <button type="button" onclick="document.getElementById('addItemModal').classList.remove('active')" class="btn-secondary py-3">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function filterInventory(cat) {
+  document.querySelectorAll('.inv-card').forEach(c => c.style.display = (cat==='All' || c.dataset.cat===cat) ? '' : 'none');
+  document.querySelectorAll('.inv-tab').forEach(btn => {
+    const active = btn.dataset.cat === cat;
+    btn.className = `inv-tab px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${active ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'glass text-white/50 hover:text-white/80'}`;
+  });
+}
+
+async function quickAdjust(id, name, type) {
+  const { value } = await swalDark({ title: `${type==='IN'?'📥 Stock In':'📤 Stock Out'}: ${name}`, input: 'number', inputLabel: 'Quantity', showCancelButton: true, confirmButtonText: 'Confirm', inputAttributes: { min: 0.01, step: 0.1 } });
+  if (!value || value <= 0) return;
+  const res = await fetch('/inventory/adjust', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ item_id: id, quantity: value, type, purpose: 'Quick Adjustment' }) });
+  const result = await res.json();
+  if (result.success) { showToast(`${type==='IN'?'Added':'Removed'} ${value} units`); setTimeout(() => location.reload(), 800); }
+}
+
+function addIssueRow() {
+  const container = document.getElementById('issueItems');
+  const clone = container.querySelector('.issue-item').cloneNode(true);
+  clone.querySelectorAll('input,select').forEach(el => el.value = '');
+  container.appendChild(clone);
+}
+
+document.getElementById('issueForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const itemIds = [...this.querySelectorAll('[name="item_id[]"]')].map(el => el.value).filter(Boolean);
+  const quantities = [...this.querySelectorAll('[name="quantity[]"]')].map(el => el.value);
+  const purposes = [...this.querySelectorAll('[name="purpose[]"]')].map(el => el.value);
+  const invItems = itemIds.map((id, i) => ({ item_id: id, quantity: quantities[i], purpose: purposes[i] }));
+  const res = await fetch('/inventory/issue', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ items: invItems, transaction_date: document.getElementById('issueDate').value, issued_by: document.getElementById('issuedBy').value }) });
+  const result = await res.json();
+  if (result.success) { document.getElementById('issueModal').classList.remove('active'); showToast(result.message); setTimeout(() => location.reload(), 800); }
+  else swalDark({ icon: 'error', title: 'Error', text: result.message });
+});
+
+document.getElementById('addItemForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(this));
+  data.is_perishable = document.getElementById('perishable').checked ? 'true' : 'false';
+  const res = await fetch('/inventory/item', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+  const result = await res.json();
+  if (result.success) { showToast('Item added!'); setTimeout(() => location.reload(), 800); }
+  else swalDark({ icon: 'error', title: 'Error', text: result.message });
+});
+</script>

@@ -32,9 +32,31 @@ app.use(session({
   cookie: { secure: false, maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 
+const fs = require('fs');
+
+// Dynamic views directory resolver for local and serverless (Netlify/AWS Lambda)
+function findViewsDir() {
+  const candidates = [
+    path.join(process.cwd(), 'views'),
+    path.join(__dirname, '..', 'views'),
+    path.join(__dirname, 'views'),
+    path.join(__dirname, '..', '..', 'views'),
+    path.join('/var/task', 'views'),
+    path.join('/var/task', 'netlify', 'views'),
+    path.join('/var/task', 'netlify', 'functions', 'views'),
+    path.resolve('views')
+  ];
+  for (const c of candidates) {
+    try {
+      if (fs.existsSync(c)) return c;
+    } catch(e) {}
+  }
+  return path.join(process.cwd(), 'views');
+}
+
 // View engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '..', 'views'));
+app.set('views', findViewsDir());
 
 // Auth middleware
 const requireAuth = (req, res, next) => {
@@ -55,15 +77,25 @@ app.use((req, res, next) => {
   const originalRender = res.render.bind(res);
 
   res.render = function(view, data = {}, callback) {
+    const currentViewsDir = findViewsDir();
     const standAloneViews = [
       'auth/login', 'auth/signup',
       'staff/salary-slip', 'donations/receipt', 'pooja/slip'
     ];
+
     if (standAloneViews.includes(view)) {
+      const singleViewPath = path.join(currentViewsDir, view + '.ejs');
+      if (fs.existsSync(singleViewPath)) {
+        return ejs.renderFile(singleViewPath, { ...res.locals, ...data }, {}, (err, html) => {
+          if (err) return res.status(500).send('<pre style="color:red">' + err.message + '</pre>');
+          res.send(html);
+        });
+      }
       return originalRender(view, { ...res.locals, ...data }, callback);
     }
-    const viewPath = path.join(__dirname, '..', 'views', view + '.ejs');
-    const layoutPath = path.join(__dirname, '..', 'views', 'layout.ejs');
+
+    const viewPath = path.join(currentViewsDir, view + '.ejs');
+    const layoutPath = path.join(currentViewsDir, 'layout.ejs');
     const locals = { ...res.locals, ...data };
 
     ejs.renderFile(viewPath, locals, {}, (err, body) => {
@@ -91,13 +123,23 @@ app.use('/reports', requireAuth, require('./routes/reports'));
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).render('error', { message: 'Page not found', title: '404 — Not Found' });
+  const currentViewsDir = findViewsDir();
+  if (fs.existsSync(path.join(currentViewsDir, 'error.ejs'))) {
+    res.status(404).render('error', { message: 'Page not found', title: '404 — Not Found' });
+  } else {
+    res.status(404).send('<h1>404 — Not Found</h1><p>The requested page does not exist.</p>');
+  }
 });
 
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).render('error', { message: err.message, title: 'Server Error' });
+  const currentViewsDir = findViewsDir();
+  if (fs.existsSync(path.join(currentViewsDir, 'error.ejs'))) {
+    res.status(500).render('error', { message: err.message, title: 'Server Error' });
+  } else {
+    res.status(500).send(`<h1>Server Error</h1><p>${err.message}</p>`);
+  }
 });
 
 if (require.main === module) {

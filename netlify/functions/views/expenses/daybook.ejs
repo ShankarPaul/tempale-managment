@@ -1,0 +1,243 @@
+<!-- Daybook Header Controls -->
+<div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
+  <form method="GET" class="flex gap-3 items-center">
+    <label class="text-xs uppercase tracking-wider font-semibold text-white/50">Date:</label>
+    <input type="date" name="date" value="<%= date %>" class="form-input w-auto text-sm py-1.5 px-3 cursor-pointer" onchange="this.form.submit()">
+  </form>
+  <button onclick="document.getElementById('addExpenseModal').classList.add('active')" class="btn-primary text-sm">
+    <i class="ph-bold ph-plus text-base"></i>
+    <span>Add Expense</span>
+  </button>
+</div>
+
+<!-- Cash Flow Summary Cards -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="glass p-5 rounded-2xl border-l-4 border-emerald-400">
+    <p class="text-xs text-white/50 font-medium mb-1">Today's Cash In</p>
+    <p class="text-2xl font-bold text-emerald-400 font-mono">₹<%= parseFloat(cashBalance.today_in || 0).toLocaleString('en-IN') %></p>
+    <span class="text-[11px] text-emerald-400/70 mt-1 inline-block">Direct cash donations</span>
+  </div>
+  <div class="glass p-5 rounded-2xl border-l-4 border-rose-500">
+    <p class="text-xs text-white/50 font-medium mb-1">Today's Expenses</p>
+    <p class="text-2xl font-bold text-rose-400 font-mono">₹<%= parseFloat(totals.today_expenses || 0).toLocaleString('en-IN') %></p>
+    <span class="text-[11px] text-rose-400/70 mt-1 inline-block">Temple cash out</span>
+  </div>
+  <div class="glass p-5 rounded-2xl border-l-4 border-amber-400">
+    <p class="text-xs text-white/50 font-medium mb-1">Total Cash In Hand</p>
+    <p class="text-2xl font-bold text-amber-400 font-mono">₹<%= parseFloat(cashBalance.balance || 0).toLocaleString('en-IN') %></p>
+    <span class="text-[11px] text-amber-400/70 mt-1 inline-block">Net available balance</span>
+  </div>
+  <div class="glass p-5 rounded-2xl border-l-4 border-blue-400">
+    <p class="text-xs text-white/50 font-medium mb-1">Month Total Expenses</p>
+    <p class="text-2xl font-bold text-blue-400 font-mono">₹<%= parseFloat(totals.month_expenses || 0).toLocaleString('en-IN') %></p>
+    <span class="text-[11px] text-blue-400/70 mt-1 inline-block">Cumulative this month</span>
+  </div>
+</div>
+
+<!-- Daybook Formula Card -->
+<div class="glass p-5 mb-6 rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-white/5 to-transparent">
+  <div class="flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
+    <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-white/80">
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+        <i class="ph-duotone ph-vault text-amber-400 text-base"></i>
+        <span>Opening Cash</span>
+      </div>
+      <span class="text-white/30 text-base">+</span>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+        <i class="ph-duotone ph-hand-coins text-base"></i>
+        <span>Today's Cash In: ₹<%= parseFloat(cashBalance.today_in || 0).toLocaleString('en-IN') %></span>
+      </div>
+      <span class="text-white/30 text-base">−</span>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300">
+        <i class="ph-duotone ph-receipt text-base"></i>
+        <span>Today's Expenses: ₹<%= parseFloat(totals.today_expenses || 0).toLocaleString('en-IN') %></span>
+      </div>
+    </div>
+    <div class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm shadow-md font-mono">
+      Closing Cash: ₹<%= parseFloat(cashBalance.balance || 0).toLocaleString('en-IN') %>
+    </div>
+  </div>
+</div>
+
+<!-- Today's Expenses Table -->
+<div class="glass p-6 mb-6 rounded-2xl overflow-hidden">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-bold text-white text-base flex items-center gap-2">
+      <i class="ph-duotone ph-calendar text-amber-400 text-lg"></i>
+      <span>Today's Expenses — <%= new Date(date).toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'}) %></span>
+    </h3>
+    <span class="text-xs font-mono text-white/40"><%= expenses.length %> record<%= expenses.length === 1 ? '' : 's' %></span>
+  </div>
+
+  <% if(expenses.length === 0) { %>
+    <div class="text-center py-12 text-white/40">
+      <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-2 text-emerald-400">
+        <i class="ph-duotone ph-check-circle text-3xl"></i>
+      </div>
+      <p class="font-semibold text-white/70">No expenses recorded for this date</p>
+      <p class="text-xs text-white/40 mt-1">All daily temple expenses will appear here.</p>
+    </div>
+  <% } else { %>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-white/5 border-b border-white/10">
+        <tr>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-white/50 uppercase tracking-wider">Category</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-white/50 uppercase tracking-wider">Description</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-white/50 uppercase tracking-wider">Mode</th>
+          <th class="text-right px-4 py-3 text-xs font-semibold text-white/50 uppercase tracking-wider">Amount</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-white/5">
+        <% let totalAmt = 0; expenses.forEach(e => { totalAmt += parseFloat(e.amount); %>
+        <tr class="hover:bg-white/5 transition-colors">
+          <td class="px-4 py-3.5">
+            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/20">
+              <%= e.category %>
+            </span>
+          </td>
+          <td class="px-4 py-3.5 text-white/90 text-xs"><%= e.description %></td>
+          <td class="px-4 py-3.5 text-white/50 text-xs"><%= e.payment_mode %></td>
+          <td class="px-4 py-3.5 text-right font-bold text-rose-400 font-mono">₹<%= parseFloat(e.amount).toLocaleString('en-IN') %></td>
+          <td class="px-4 py-3.5 text-right">
+            <button onclick="deleteExpense(<%= e.id %>)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 inline-flex items-center justify-center transition-colors">
+              <i class="ph-bold ph-trash text-sm"></i>
+            </button>
+          </td>
+        </tr>
+        <% }); %>
+        <tr class="bg-white/5 font-bold border-t border-white/10">
+          <td colspan="3" class="px-4 py-3 text-white/70 text-xs uppercase tracking-wider">Total Today's Expenses</td>
+          <td class="px-4 py-3 text-right text-rose-400 text-base font-mono">₹<%= totalAmt.toLocaleString('en-IN') %></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal-overlay" id="addExpenseModal">
+  <div class="modal-box max-w-md w-full">
+    <div class="flex justify-between items-center mb-5 pb-3 border-b border-white/10">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+          <i class="ph-duotone ph-receipt text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Add Expense</h3>
+          <p class="text-xs text-white/40">Record daily petty cash or voucher outflow</p>
+        </div>
+      </div>
+      <button onclick="document.getElementById('addExpenseModal').classList.remove('active')" class="text-white/40 hover:text-white transition-colors">
+        <i class="ph-bold ph-x text-lg"></i>
+      </button>
+    </div>
+    <form id="addExpenseForm" class="space-y-4">
+      <div>
+        <label class="form-label">Date *</label>
+        <input type="date" name="expense_date" required class="form-input" value="<%= date %>">
+      </div>
+      <div>
+        <label class="form-label">Category *</label>
+        <select name="category" required class="form-input">
+          <option>Electricity</option>
+          <option>Pooja Samagri</option>
+          <option>Maintenance</option>
+          <option>Gas/Fuel</option>
+          <option>Cleaning</option>
+          <option>Food/Prasad</option>
+          <option>Security</option>
+          <option>Decoration</option>
+          <option>Transport</option>
+          <option>Medical</option>
+          <option>Salaries</option>
+          <option>Miscellaneous</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Description *</label>
+        <textarea name="description" required class="form-input h-20 resize-none" placeholder="What was the expense for?"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="form-label">Amount (₹) *</label>
+          <input type="number" name="amount" required min="1" class="form-input font-mono" placeholder="0.00">
+        </div>
+        <div>
+          <label class="form-label">Payment Mode</label>
+          <select name="payment_mode" class="form-input">
+            <option>Cash</option>
+            <option>UPI</option>
+            <option>Card</option>
+            <option>Net Banking</option>
+            <option>Cheque</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Approved By</label>
+        <input type="text" name="approved_by" class="form-input" placeholder="Trustee or manager name">
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1 justify-center">
+          <i class="ph-bold ph-floppy-disk text-base"></i>
+          <span>Save Expense</span>
+        </button>
+        <button type="button" onclick="document.getElementById('addExpenseModal').classList.remove('active')" class="btn-secondary">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('addExpenseForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(this));
+  try {
+    const res = await fetch('/expenses', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast('Expense recorded!');
+      setTimeout(() => location.reload(), 800);
+    } else {
+      Swal.fire({ icon: 'error', title: 'Error', text: result.message, background: '#1e1b4b', color: '#fff' });
+    }
+  } catch (err) {
+    Swal.fire({ icon: 'error', title: 'Network Error', text: err.message, background: '#1e1b4b', color: '#fff' });
+  }
+});
+
+async function deleteExpense(id) {
+  const { isConfirmed } = await Swal.fire({
+    title: 'Delete Expense?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    confirmButtonText: 'Delete',
+    background: '#1e1b4b',
+    color: '#fff'
+  });
+  if (!isConfirmed) return;
+  try {
+    const res = await fetch(`/expenses/${id}`, { method: 'DELETE' });
+    const result = await res.json();
+    if (result.success) {
+      showToast('Deleted');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      Swal.fire({ icon: 'error', title: 'Error', text: result.message, background: '#1e1b4b', color: '#fff' });
+    }
+  } catch (err) {
+    Swal.fire({ icon: 'error', title: 'Network Error', text: err.message, background: '#1e1b4b', color: '#fff' });
+  }
+}
+</script>

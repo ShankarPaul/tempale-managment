@@ -1,11 +1,11 @@
 [build]
-  command = "npm install"
+  command = "npm install && node -e \"const fs=require('fs'); fs.cpSync('views', 'netlify/views', {recursive:true}); fs.cpSync('views', 'netlify/functions/views', {recursive:true});\""
   publish = "public"
 
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = ["views/**"]
+  included_files = ["views/**", "netlify/views/**", "netlify/functions/views/**"]
 
 [[redirects]]
   from = "/*"

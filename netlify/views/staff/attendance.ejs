@@ -1,0 +1,120 @@
+<%
+const monthParts = month.split('-');
+const year = parseInt(monthParts[0]);
+const monthNum = parseInt(monthParts[1]);
+const days = Array.from({length: daysInMonth}, (_, i) => i + 1);
+const statusColors = { 'Present': 'bg-green-500 text-white', 'Absent': 'bg-red-500 text-white', 'Half-Day': 'bg-yellow-400 text-slate-900', 'Paid-Leave': 'bg-blue-500 text-white', 'Holiday': 'bg-purple-500 text-white' };
+const statusShort = { 'Present': 'P', 'Absent': 'A', 'Half-Day': 'H', 'Paid-Leave': 'L', 'Holiday': '✦' };
+%>
+
+<!-- Controls -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+  <form method="GET" class="flex items-center gap-3">
+    <input type="month" name="month" value="<%= month %>" class="form-input w-auto" onchange="this.form.submit()">
+    <span class="text-white/50 font-semibold text-sm hidden sm:block"><%= monthName %></span>
+  </form>
+  <div class="flex flex-wrap gap-2 items-center">
+    <div class="flex flex-wrap gap-2 items-center text-xs">
+      <% [['Present','P','green'],['Absent','A','red'],['Half-Day','H','yellow'],['Paid-Leave','L','blue']].forEach(([s,k,c]) => { %>
+      <span class="flex items-center gap-1.5 text-white/50"><span class="w-5 h-5 bg-<%= c %>-500 rounded-full flex items-center justify-center text-white text-xs font-bold"><%= k %></span><%= s %></span>
+      <% }); %>
+    </div>
+    <button onclick="markAllPresent()" class="btn-primary text-sm py-2 px-4">
+      <i class="ph-bold ph-check-square text-base"></i> Mark All Present Today
+    </button>
+  </div>
+</div>
+
+<!-- Attendance Grid -->
+<div class="glass-card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="data-table" style="min-width: 900px">
+      <thead>
+        <tr>
+          <th class="sticky left-0 z-10 min-w-44" style="background: rgba(15,12,41,0.9)">Staff Member</th>
+          <th class="min-w-20">Role</th>
+          <% days.forEach(d => { %>
+          <th class="text-center min-w-8 px-1"><%= d %></th>
+          <% }); %>
+          <th class="text-center min-w-16">Days ✓</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if(!staff.length) { %>
+        <tr><td colspan="<%= daysInMonth + 3 %>" class="text-center py-16 text-white/30">
+          <i class="ph-duotone ph-users text-4xl mb-2 block"></i>No staff added yet
+        </td></tr>
+        <% } %>
+        <% staff.forEach(s => {
+          let daysPresent = 0;
+          days.forEach(d => {
+            const st = attendanceMap[s.id] && attendanceMap[s.id][d];
+            if(st === 'Present') daysPresent += 1;
+            else if(st === 'Half-Day') daysPresent += 0.5;
+            else if(st === 'Paid-Leave') daysPresent += 1;
+          });
+          const dpColor = daysPresent >= daysInMonth*0.9 ? 'text-green-400' : daysPresent >= daysInMonth*0.75 ? 'text-amber-400' : 'text-red-400';
+        %>
+        <tr>
+          <td class="sticky left-0 z-10" style="background: rgba(15,12,41,0.9)">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center font-bold text-xs text-white flex-shrink-0">
+                <%= s.name.charAt(0) %>
+              </div>
+              <span class="font-semibold text-white/85 text-sm whitespace-nowrap"><%= s.name %></span>
+            </div>
+          </td>
+          <td><span class="badge badge-amber"><%= s.role %></span></td>
+          <% days.forEach(d => {
+            const dateStr = `${year}-${String(monthNum).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const status = attendanceMap[s.id] && attendanceMap[s.id][d];
+          %>
+          <td class="px-1 text-center">
+            <button
+              onclick="cycleStatus(<%= s.id %>, '<%= dateStr %>', this)"
+              data-status="<%= status || '' %>"
+              title="<%= status || 'Not Marked' %>"
+              class="w-7 h-7 rounded-full text-xs font-bold transition-all duration-150 hover:scale-110 <%= status ? statusColors[status] : 'bg-white/10 text-white/25 hover:bg-white/20' %>">
+              <%= status ? statusShort[status] : '·' %>
+            </button>
+          </td>
+          <% }); %>
+          <td class="text-center font-bold <%= dpColor %>"><%= daysPresent %>/<%= daysInMonth %></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const statuses = ['', 'Present', 'Absent', 'Half-Day', 'Paid-Leave'];
+const statusCls = { 'Present': 'bg-green-500 text-white', 'Absent': 'bg-red-500 text-white', 'Half-Day': 'bg-yellow-400 text-slate-900', 'Paid-Leave': 'bg-blue-500 text-white' };
+const statusShort = { 'Present': 'P', 'Absent': 'A', 'Half-Day': 'H', 'Paid-Leave': 'L' };
+
+async function cycleStatus(staffId, date, btn) {
+  const current = btn.dataset.status || '';
+  const idx = statuses.indexOf(current);
+  const next = statuses[(idx + 1) % statuses.length];
+  btn.dataset.status = next;
+  if (next) {
+    btn.className = `w-7 h-7 rounded-full text-xs font-bold transition-all duration-150 hover:scale-110 ${statusCls[next]}`;
+    btn.textContent = statusShort[next];
+  } else {
+    btn.className = 'w-7 h-7 rounded-full text-xs font-bold transition-all duration-150 hover:scale-110 bg-white/10 text-white/25 hover:bg-white/20';
+    btn.textContent = '·';
+  }
+  if (next) {
+    fetch('/staff/attendance', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ staff_id: staffId, attendance_date: date, status: next }) });
+  }
+}
+
+async function markAllPresent() {
+  const today = new Date().toISOString().split('T')[0];
+  const { isConfirmed } = await swalDark({ title: 'Mark All Present?', text: `Mark all active staff Present for today (${today})?`, icon: 'question', showCancelButton: true, confirmButtonText: '✓ Mark All Present!', confirmButtonColor: '#22c55e' });
+  if (!isConfirmed) return;
+  const res = await fetch('/staff/attendance/mark-all', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ date: today }) });
+  const result = await res.json();
+  if (result.success) { showToast(`✅ ${result.count} staff marked present!`); setTimeout(() => location.reload(), 1000); }
+}
+</script>

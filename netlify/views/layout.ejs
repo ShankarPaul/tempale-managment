@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — <%= user?.templeName || 'Mandir ERP' %> 🕉️</title>
+  <meta name="description" content="Temple Management System — Mandir ERP">
+
+  <!-- Tailwind CSS v3 CDN (forms plugin removed to prevent solid white background overrides) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+          colors: {
+            saffron: { 300:'#fcd34d', 400:'#fbbf24', 500:'#f59e0b', 600:'#d97706', 700:'#b45309' },
+          },
+          backgroundImage: {
+            'glass': 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+          },
+          animation: {
+            'fade-in': 'fadeIn .3s ease',
+            'slide-up': 'slideUp .3s ease',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
+          },
+          keyframes: {
+            fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
+            slideUp: { from: { opacity: 0, transform: 'translateY(16px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    body {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 40%, #24243e 100%);
+      min-height: 100vh;
+    }
+
+    /* Glass card */
+    .glass {
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+    }
+    .glass-dark {
+      background: rgba(0,0,0,0.2);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+    }
+    .glass-card {
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      transition: all 0.25s ease;
+    }
+    .glass-card:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(251,191,36,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: rgba(15,12,41,0.92);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      color: rgba(255,255,255,0.65);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .nav-link:hover {
+      color: white;
+      background: rgba(255,255,255,0.07);
+    }
+    .nav-link.active {
+      color: #fbbf24;
+      background: rgba(251,191,36,0.12);
+      border: 1px solid rgba(251,191,36,0.2);
+    }
+    .nav-link.active i { color: #fbbf24; }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      padding: 0 14px;
+      margin: 16px 0 6px;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(245,158,11,0.3);
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(245,158,11,0.4);
+    }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.8);
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.13); color: white; }
+    .btn-danger {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(239,68,68,0.15); color: #f87171;
+      padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(239,68,68,0.2);
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+
+    /* Form inputs - Dark Glass styling */
+    .form-input,
+    input.form-input,
+    select.form-input,
+    textarea.form-input,
+    input[type='text'].form-input,
+    input[type='email'].form-input,
+    input[type='password'].form-input,
+    input[type='number'].form-input,
+    input[type='date'].form-input,
+    input[type='time'].form-input,
+    input[type='month'].form-input,
+    input[type='tel'].form-input {
+      width: 100% !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      background-color: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.16) !important;
+      border-radius: 12px !important;
+      color: #ffffff !important;
+      padding: 11px 14px !important;
+      font-size: 14px !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      outline: none !important;
+      transition: all 0.2s ease !important;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .form-input::placeholder,
+    input.form-input::placeholder,
+    textarea.form-input::placeholder {
+      color: rgba(255, 255, 255, 0.4) !important;
+      opacity: 1 !important;
+    }
+
+    .form-input:focus,
+    input.form-input:focus,
+    select.form-input:focus,
+    textarea.form-input:focus {
+      background: rgba(255, 255, 255, 0.12) !important;
+      background-color: rgba(255, 255, 255, 0.12) !important;
+      border-color: #f59e0b !important;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+      color: #ffffff !important;
+    }
+
+    .form-input option {
+      background-color: #1e1b4b !important;
+      color: #ffffff !important;
+    }
+
+    /* Date and time picker icons in dark mode */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator,
+    input[type="month"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
+      opacity: 0.75;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover,
+    input[type="time"]::-webkit-calendar-picker-indicator:hover,
+    input[type="month"]::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
+    }
+
+    /* Browser Autofill fix (prevents Chrome/Edge from turning background white) */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    textarea:-webkit-autofill,
+    select:-webkit-autofill {
+      -webkit-text-fill-color: #ffffff !important;
+      -webkit-box-shadow: 0 0 0px 1000px #1e1b4b inset !important;
+      box-shadow: 0 0 0px 1000px #1e1b4b inset !important;
+      transition: background-color 5000s ease-in-out 0s !important;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 6px;
+    }
+
+    /* Badges */
+    .badge { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .badge-green { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+    .badge-red { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+    .badge-amber { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+    .badge-blue { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.2); }
+    .badge-purple { background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.2); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: linear-gradient(135deg, rgba(30,27,75,0.95), rgba(15,12,41,0.98));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      padding: 28px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 92vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(251,191,36,0.3); border-radius: 4px; }
+
+    /* Table */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.35); border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .data-table td { padding: 14px 16px; font-size: 13px; color: rgba(255,255,255,0.8); border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+    .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    /* Stat card gradient borders */
+    .stat-card { position: relative; }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(251,191,36,0.3), rgba(139,92,246,0.1), transparent);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* Mobile sidebar rules */
+    @media (max-width: 1023px) {
+      #mainSidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 50;
+      }
+      #mainSidebar.open {
+        transform: translateX(0) !important;
+      }
+      #sidebarOverlay {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+      #sidebarOverlay.open {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      #mainSidebar {
+        transform: none !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        z-index: 30 !important;
+      }
+      #sidebarOverlay {
+        display: none !important;
+      }
+    }
+
+    @media print { .no-print { display: none !important; } body { background: white !important; } }
+
+    /* Glow accents */
+    .glow-amber { box-shadow: 0 0 30px rgba(251,191,36,0.2); }
+    .text-glow { text-shadow: 0 0 20px rgba(251,191,36,0.5); }
+  </style>
+</head>
+<body class="h-full text-white">
+
+<!-- Mobile Sidebar Overlay -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 lg:hidden no-print" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside id="mainSidebar" class="sidebar fixed top-0 left-0 h-full w-72 z-50 flex flex-col no-print">
+  <!-- Logo & Temple Title -->
+  <div class="p-5 border-b border-white/10 flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl shadow-lg glow-amber flex-shrink-0">
+        🕉️
+      </div>
+      <div class="min-w-0">
+        <h1 class="font-bold text-white text-base leading-tight truncate"><%= user?.templeName || 'SHRI MANDIR' %></h1>
+        <p class="text-xs text-amber-300/80 font-medium mt-0.5">Management System</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="flex-1 px-3 py-4 overflow-y-auto space-y-1 custom-scrollbar">
+    <!-- Dashboard -->
+    <a href="/" class="nav-link <%= currentPath === '/' ? 'active' : '' %>">
+      <i class="ph-duotone ph-squares-four text-xl"></i>
+      <span class="font-semibold text-sm">Dashboard</span>
+    </a>
+
+    <!-- Management Group -->
+    <p class="nav-label">Management</p>
+    <a href="/staff" class="nav-link <%= currentPath.startsWith('/staff') && currentPath !== '/staff/attendance' ? 'active' : '' %>">
+      <i class="ph-duotone ph-users text-xl"></i>
+      <span class="font-medium text-sm">Staff & Payroll</span>
+    </a>
+    <a href="/staff/attendance" class="nav-link <%= currentPath === '/staff/attendance' ? 'active' : '' %>">
+      <i class="ph-duotone ph-calendar-check text-xl"></i>
+      <span class="font-medium text-sm">Daily Attendance</span>
+    </a>
+    <a href="/donations" class="nav-link <%= currentPath.startsWith('/donations') && !currentPath.includes('donors') ? 'active' : '' %>">
+      <i class="ph-duotone ph-hand-heart text-xl"></i>
+      <span class="font-medium text-sm">Donations & Chanda</span>
+    </a>
+    <a href="/donations/donors" class="nav-link <%= currentPath.includes('donors') ? 'active' : '' %>">
+      <i class="ph-duotone ph-address-book text-xl"></i>
+      <span class="font-medium text-sm">Donor Directory</span>
+    </a>
+
+    <!-- Operations Group -->
+    <p class="nav-label">Operations & Seva</p>
+    <a href="/inventory" class="nav-link <%= currentPath.startsWith('/inventory') ? 'active' : '' %>">
+      <i class="ph-duotone ph-package text-xl"></i>
+      <span class="font-medium text-sm">Inventory & Kitchen</span>
+    </a>
+    <a href="/expenses/daybook" class="nav-link <%= currentPath === '/expenses/daybook' ? 'active' : '' %>">
+      <i class="ph-duotone ph-notebook text-xl"></i>
+      <span class="font-medium text-sm">Daily Daybook</span>
+    </a>
+    <a href="/expenses" class="nav-link <%= currentPath === '/expenses' ? 'active' : '' %>">
+      <i class="ph-duotone ph-receipt text-xl"></i>
+      <span class="font-medium text-sm">Temple Expenses</span>
+    </a>
+    <a href="/pooja" class="nav-link <%= currentPath.startsWith('/pooja') ? 'active' : '' %>">
+      <i class="ph-duotone ph-flower-lotus text-xl"></i>
+      <span class="font-medium text-sm">Pooja Bookings</span>
+    </a>
+
+    <!-- Analytics Group -->
+    <p class="nav-label">Analytics & Audit</p>
+    <a href="/reports" class="nav-link <%= currentPath.startsWith('/reports') ? 'active' : '' %>">
+      <i class="ph-duotone ph-chart-bar text-xl"></i>
+      <span class="font-medium text-sm">Reports & Analytics</span>
+    </a>
+  </nav>
+
+  <!-- Bottom Info & User Profile -->
+  <div class="p-3 border-t border-white/10 space-y-2 flex-shrink-0">
+    <!-- Date & Blessing Card -->
+    <div class="glass p-2.5 rounded-xl border border-white/10 bg-amber-500/5">
+      <p class="text-amber-300 text-xs font-semibold flex items-center gap-1.5">
+        <i class="ph-duotone ph-calendar text-sm"></i>
+        <span><%= new Date().toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short'}) %></span>
+      </p>
+      <p class="text-white text-xs font-bold mt-1 flex items-center gap-1.5">
+        <span>🕉️</span>
+        <span class="text-amber-200">Jai Shri Ram</span>
+      </p>
+    </div>
+
+    <!-- User Profile Card -->
+    <div class="glass rounded-xl p-2.5 flex items-center gap-2.5 border border-white/10">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center font-bold text-xs text-white flex-shrink-0 shadow-sm">
+        <%= user?.name?.charAt(0)?.toUpperCase() || 'A' %>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-white text-xs truncate leading-tight"><%= user?.name || 'Administrator' %></p>
+        <p class="text-[10px] text-amber-300/80 uppercase tracking-wider font-semibold truncate"><%= user?.role || 'Admin' %></p>
+      </div>
+      <a href="/auth/logout" class="w-7 h-7 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-400 flex items-center justify-center transition-colors" title="Sign Out">
+        <i class="ph-bold ph-sign-out text-sm"></i>
+      </a>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="lg:ml-72 min-h-screen flex flex-col">
+  <!-- Top Header -->
+  <header class="sticky top-0 z-20 no-print" style="background: rgba(15,12,41,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08);">
+    <div class="flex items-center justify-between px-4 sm:px-6 py-4">
+      <div class="flex items-center gap-3">
+        <!-- Mobile hamburger -->
+        <button onclick="openSidebar()" class="lg:hidden text-white/60 hover:text-white">
+          <i class="ph-bold ph-list text-2xl"></i>
+        </button>
+        <div>
+          <h2 class="font-bold text-white text-lg leading-tight"><%= title %></h2>
+          <p class="text-white/30 text-xs hidden sm:block"><%= new Date().toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) %></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openQuickDonation()" class="btn-primary text-sm py-2 px-4">
+          <i class="ph-bold ph-plus text-base"></i>
+          <span class="hidden sm:inline">Quick Donation</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="flex-1 p-4 sm:p-6 animate-fade-in">
+    <%- body %>
+  </main>
+
+  <footer class="text-center py-4 text-white/20 text-xs no-print">
+    🕉️ <%= user?.templeName || 'Mandir ERP' %> — Temple Management System
+  </footer>
+</div>
+
+<!-- Quick Donation Modal -->
+<div class="modal-overlay" id="quickDonationModal">
+  <div class="modal-box w-full max-w-md">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold text-white flex items-center gap-2">
+        <span class="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center"><i class="ph-duotone ph-hand-heart text-amber-400 text-xl"></i></span>
+        Quick Donation
+      </h3>
+      <button onclick="closeQuickDonation()" class="text-white/40 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+        <i class="ph-bold ph-x text-lg"></i>
+      </button>
+    </div>
+    <form id="quickDonationForm" class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="form-label">Donor Name *</label>
+          <input type="text" name="donor_name" required placeholder="Full name" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Phone</label>
+          <input type="tel" name="donor_phone" placeholder="Mobile" class="form-input">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="form-label">Amount (₹) *</label>
+          <input type="number" name="amount" required min="1" placeholder="0.00" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Mode *</label>
+          <select name="payment_mode" required class="form-input">
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Card">Card</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Purpose</label>
+        <input type="text" name="purpose" placeholder="General Donation, Navratri..." class="form-input">
+      </div>
+      <input type="hidden" name="donation_date" value="<%= new Date().toISOString().split('T')[0] %>">
+      <div class="flex gap-3 pt-1">
+        <button type="submit" class="btn-primary flex-1 justify-center">
+          <i class="ph-bold ph-check-circle text-base"></i> Save & Print
+        </button>
+        <button type="button" onclick="closeQuickDonation()" class="btn-secondary">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Sidebar
+function openSidebar() {
+  const sb = document.getElementById('mainSidebar') || document.getElementById('mobileSidebar');
+  if (sb) sb.classList.add('open');
+  const ov = document.getElementById('sidebarOverlay');
+  if (ov) ov.classList.add('open');
+}
+function closeSidebar() {
+  const sb = document.getElementById('mainSidebar') || document.getElementById('mobileSidebar');
+  if (sb) sb.classList.remove('open');
+  const ov = document.getElementById('sidebarOverlay');
+  if (ov) ov.classList.remove('open');
+}
+
+// Quick Donation Modal
+function openQuickDonation() { document.getElementById('quickDonationModal').classList.add('active'); }
+function closeQuickDonation() { document.getElementById('quickDonationModal').classList.remove('active'); }
+document.getElementById('quickDonationModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeQuickDonation(); });
+
+document.getElementById('quickDonationForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(this));
+  try {
+    const res = await fetch('/donations/cash', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    const result = await res.json();
+    if (result.success) {
+      closeQuickDonation();
+      this.reset();
+      Swal.fire({
+        icon: 'success', title: 'Donation Saved!',
+        text: `Receipt: ${result.receipt.receipt_number}`,
+        showCancelButton: true,
+        confirmButtonText: '🖨️ Print Receipt',
+        cancelButtonText: 'Close',
+        background: '#1e1b4b',
+        color: '#fff',
+        confirmButtonColor: '#d97706'
+      }).then(r => { if (r.isConfirmed) window.open(`/donations/receipt/cash/${result.receipt.id}`, '_blank'); });
+    } else {
+      Swal.fire({ icon: 'error', title: 'Error', text: result.message, background: '#1e1b4b', color: '#fff' });
+    }
+  } catch(err) {
+    Swal.fire({ icon: 'error', title: 'Network Error', text: 'Please try again.', background: '#1e1b4b', color: '#fff' });
+  }
+});
+
+// Global toast helper
+window.showToast = (msg, type = 'success') => {
+  const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3000, timerProgressBar: true, background: '#1e1b4b', color: '#fff' });
+  Toast.fire({ icon: type, title: msg });
+};
+
+// SweetAlert dark theme defaults
+window.swalDark = (opts) => Swal.fire({ background: '#1e1b4b', color: '#fff', confirmButtonColor: '#d97706', ...opts });
+</script>
+</body>
+</html>

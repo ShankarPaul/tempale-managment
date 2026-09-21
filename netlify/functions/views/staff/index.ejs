@@ -1,0 +1,205 @@
+<!-- Header Controls -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+  <p class="text-white/40 text-sm"><%= staff.length %> staff members registered</p>
+  <div class="flex flex-wrap gap-2">
+    <a href="/staff/attendance" class="btn-secondary text-sm py-2 px-4">
+      <i class="ph-duotone ph-calendar-check text-base"></i> Attendance
+    </a>
+    <button onclick="document.getElementById('payrollModal').classList.add('active')" class="btn-secondary text-sm py-2 px-4">
+      <i class="ph-duotone ph-calculator text-base"></i> Payroll
+    </button>
+    <button onclick="document.getElementById('addStaffModal').classList.add('active')" class="btn-primary text-sm py-2 px-4">
+      <i class="ph-bold ph-user-plus text-base"></i> Add Staff
+    </button>
+  </div>
+</div>
+
+<!-- Role Filters -->
+<div class="flex flex-wrap gap-2 mb-5">
+  <% ['All','Priest','Cook','Cleaner','Guard','Admin','Storekeeper','Manager','Driver'].forEach((role,i) => { %>
+  <button onclick="filterRole('<%= role %>')" class="role-tab px-4 py-2 rounded-xl text-xs font-bold transition-all <%= i===0?'bg-amber-500/20 text-amber-400 border border-amber-500/30':'glass text-white/50 hover:text-white/80' %>" data-role="<%= role %>"><%= role %></button>
+  <% }); %>
+</div>
+
+<!-- Staff Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" id="staffGrid">
+  <% if(!staff.length) { %>
+  <div class="col-span-full text-center py-20">
+    <div class="w-20 h-20 rounded-full glass flex items-center justify-center mx-auto mb-4">
+      <i class="ph-duotone ph-users text-4xl text-white/20"></i>
+    </div>
+    <p class="text-white/40 font-semibold text-lg">No staff members yet</p>
+    <p class="text-white/25 text-sm mt-1">Click "Add Staff" to add your first team member</p>
+  </div>
+  <% } %>
+  <% staff.forEach(s => { %>
+  <div class="glass-card p-5 staff-card" data-role="<%= s.role %>">
+    <div class="flex items-start justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0" style="box-shadow:0 6px 20px rgba(251,191,36,0.3)">
+          <%= s.name.charAt(0).toUpperCase() %>
+        </div>
+        <div>
+          <h4 class="font-bold text-white text-sm leading-tight"><%= s.name %></h4>
+          <span class="badge badge-amber mt-1 inline-block"><%= s.role %></span>
+        </div>
+      </div>
+      <div class="flex gap-1">
+        <a href="/staff/<%= s.id %>" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-blue-500/15 text-blue-400 transition-colors">
+          <i class="ph-duotone ph-eye text-base"></i>
+        </a>
+        <button onclick="deleteStaff(<%= s.id %>)" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-red-500/15 text-red-400 transition-colors">
+          <i class="ph-duotone ph-trash text-base"></i>
+        </button>
+      </div>
+    </div>
+    <div class="space-y-2 text-sm">
+      <div class="flex items-center gap-2 text-white/50"><i class="ph-duotone ph-phone text-sm flex-shrink-0"></i><span><%= s.phone || 'No phone' %></span></div>
+      <div class="flex items-center gap-2 text-white/50"><i class="ph-duotone ph-calendar text-sm flex-shrink-0"></i><span>Joined: <%= new Date(s.date_of_joining).toLocaleDateString('en-IN') %></span></div>
+      <div class="flex justify-between items-center pt-3 border-t border-white/8 mt-3">
+        <span class="text-white/30 text-xs">Base Salary</span>
+        <span class="font-bold text-green-400 text-base">₹<%= parseFloat(s.base_salary).toLocaleString('en-IN') %></span>
+      </div>
+    </div>
+  </div>
+  <% }); %>
+</div>
+
+<!-- Add Staff Modal -->
+<div class="modal-overlay" id="addStaffModal">
+  <div class="modal-box max-w-2xl">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold text-white flex items-center gap-2">
+        <span class="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center"><i class="ph-duotone ph-user-plus text-blue-400 text-xl"></i></span>
+        Add New Staff Member
+      </h3>
+      <button onclick="document.getElementById('addStaffModal').classList.remove('active')" class="text-white/40 hover:text-white w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/10">
+        <i class="ph-bold ph-x text-lg"></i>
+      </button>
+    </div>
+    <form id="addStaffForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="sm:col-span-1">
+        <label class="form-label">Full Name *</label>
+        <input type="text" name="name" required class="form-input" placeholder="Pandit Ramesh Sharma">
+      </div>
+      <div>
+        <label class="form-label">Role *</label>
+        <select name="role" required class="form-input">
+          <option value="">Select Role</option>
+          <option>Priest</option><option>Cook</option><option>Cleaner</option><option>Guard</option>
+          <option>Admin</option><option>Storekeeper</option><option>Manager</option><option>Driver</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Phone</label>
+        <input type="tel" name="phone" class="form-input" placeholder="9876543210">
+      </div>
+      <div>
+        <label class="form-label">Aadhaar Number</label>
+        <input type="text" name="aadhaar" class="form-input" placeholder="12-digit number">
+      </div>
+      <div>
+        <label class="form-label">Date of Joining *</label>
+        <input type="date" name="date_of_joining" required class="form-input">
+      </div>
+      <div>
+        <label class="form-label">Base Monthly Salary (₹) *</label>
+        <input type="number" name="base_salary" required class="form-input" placeholder="15000">
+      </div>
+      <div>
+        <label class="form-label">Bank Account Number</label>
+        <input type="text" name="bank_account" class="form-input">
+      </div>
+      <div>
+        <label class="form-label">Bank Name</label>
+        <input type="text" name="bank_name" class="form-input" placeholder="State Bank of India">
+      </div>
+      <div>
+        <label class="form-label">IFSC Code</label>
+        <input type="text" name="ifsc_code" class="form-input" placeholder="SBIN0001234">
+      </div>
+      <div>
+        <label class="form-label">UPI ID</label>
+        <input type="text" name="upi_id" class="form-input" placeholder="name@upi">
+      </div>
+      <div class="sm:col-span-2">
+        <label class="form-label">Address</label>
+        <textarea name="address" class="form-input h-16 resize-none" placeholder="Full residential address"></textarea>
+      </div>
+      <div class="sm:col-span-2 flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1 justify-center py-3">
+          <i class="ph-bold ph-check-circle text-base"></i> Save Staff Member
+        </button>
+        <button type="button" onclick="document.getElementById('addStaffModal').classList.remove('active')" class="btn-secondary py-3">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Payroll Modal -->
+<div class="modal-overlay" id="payrollModal">
+  <div class="modal-box max-w-md">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold text-white">Generate Payroll</h3>
+      <button onclick="document.getElementById('payrollModal').classList.remove('active')" class="text-white/40 hover:text-white w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/10"><i class="ph-bold ph-x text-lg"></i></button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="form-label">Select Month *</label>
+        <input type="month" id="payrollMonth" class="form-input" value="<%= new Date().toISOString().substring(0,7) %>">
+      </div>
+      <div id="payrollResult" class="hidden max-h-56 overflow-y-auto space-y-2"></div>
+      <button onclick="generatePayroll()" id="genPayrollBtn" class="btn-primary w-full justify-center py-3">
+        <i class="ph-duotone ph-calculator text-base"></i> Generate Payroll
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function filterRole(role) {
+  document.querySelectorAll('.staff-card').forEach(c => {
+    c.style.display = (role === 'All' || c.dataset.role === role) ? '' : 'none';
+  });
+  document.querySelectorAll('.role-tab').forEach(btn => {
+    const isActive = btn.dataset.role === role;
+    btn.className = `role-tab px-4 py-2 rounded-xl text-xs font-bold transition-all ${isActive ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'glass text-white/50 hover:text-white/80'}`;
+  });
+}
+
+document.getElementById('addStaffForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(this));
+  const btn = this.querySelector('[type="submit"]');
+  btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Saving...';
+  const res = await fetch('/staff', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+  const result = await res.json();
+  btn.disabled = false; btn.innerHTML = '<i class="ph-bold ph-check-circle text-base"></i> Save Staff Member';
+  if (result.success) { showToast('Staff member added!'); setTimeout(() => location.reload(), 800); }
+  else swalDark({ icon: 'error', title: 'Error', text: result.message });
+});
+
+async function deleteStaff(id) {
+  const { isConfirmed } = await swalDark({ title: 'Deactivate Staff?', text: 'This will mark them as inactive.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Deactivate' });
+  if (!isConfirmed) return;
+  const res = await fetch(`/staff/${id}`, { method: 'DELETE' });
+  const result = await res.json();
+  if (result.success) { showToast('Staff deactivated'); setTimeout(() => location.reload(), 800); }
+}
+
+async function generatePayroll() {
+  const month = document.getElementById('payrollMonth').value;
+  if (!month) return;
+  const btn = document.getElementById('genPayrollBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
+  const res = await fetch('/staff/payroll/generate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ month }) });
+  const result = await res.json();
+  btn.disabled = false; btn.innerHTML = '<i class="ph-duotone ph-calculator text-base"></i> Generate Payroll';
+  if (result.success) {
+    const div = document.getElementById('payrollResult');
+    div.innerHTML = result.data.map(r => `<div class="flex justify-between items-center p-3 glass rounded-xl"><span class="text-white/80 text-sm font-medium">${r.name}</span><span class="font-bold text-green-400">₹${parseFloat(r.netSalary).toLocaleString('en-IN')}</span></div>`).join('');
+    div.classList.remove('hidden');
+    showToast(`Payroll for ${result.data.length} staff generated!`);
+  } else swalDark({ icon: 'error', title: 'Error', text: result.message });
+}
+</script>
